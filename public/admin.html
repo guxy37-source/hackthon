@@ -314,7 +314,7 @@
       const stats = lastStats;
       const inPersonRatio = stats.total > 0 ? ((stats.inPerson / stats.total) * 100).toFixed(1) : 0;
       const onlineRatio = stats.total > 0 ? ((stats.online / stats.total) * 100).toFixed(1) : 0;
-      const checkedRatio = stats.inPerson > 0 ? ((stats.checkedInCount / stats.inPerson) * 100).toFixed(1) : 0;
+      const checkedRatio = stats.total > 0 ? ((stats.checkedInCount / stats.total) * 100).toFixed(1) : 0;
       document.getElementById('stat-in-person-ratio').textContent = `${LangManager.t('stat.inPersonRatio')} ${inPersonRatio}%`;
       document.getElementById('stat-online-ratio').textContent = `${LangManager.t('stat.onlineRatio')} ${onlineRatio}%`;
       document.getElementById('stat-checked-ratio').textContent = `${LangManager.t('stat.checkedRatio')} ${checkedRatio}%`;

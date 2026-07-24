@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script src="i18n.js"></script>
+  <script src="intl-phone.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
     body {
@@ -141,11 +142,7 @@
             <label class="block text-xs font-medium text-slate-300 mb-1">
               <span data-i18n="field.phone">联系电话</span> <span class="text-rose-400">*</span>
             </label>
-            <div class="relative">
-              <i class="fa-solid fa-mobile-screen absolute left-3.5 top-3 text-slate-400 text-sm"></i>
-              <input type="tel" id="phone" name="phone" required data-i18n-placeholder="placeholder.phone" placeholder="11位手机号码" 
-                class="w-full bg-slate-900/80 border border-slate-700/80 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 text-slate-100 text-sm rounded-xl pl-10 pr-3 py-2.5 outline-none transition-all placeholder:text-slate-500">
-            </div>
+            <div id="intl-phone-container"></div>
           </div>
         </div>
 
@@ -263,6 +260,9 @@
     document.getElementById('lang-switcher').innerHTML = LangManager.renderSwitcher(false);
     LangManager.init();
 
+    // Render international phone component
+    IntlPhone.render('intl-phone-container', 'phone');
+
     const form = document.getElementById('registration-form');
     const formContainer = document.getElementById('form-container');
     const ticketContainer = document.getElementById('ticket-container');
@@ -291,8 +291,11 @@
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
 
-      // Validation
-      if (!data.phone || !/^1[3-9]\d{9}$/.test(data.phone.trim())) {
+      // Use E.164 full phone number
+      data.phone = IntlPhone.getFullNumber();
+
+      // Validation - international phone (E.164)
+      if (!IntlPhone.isValid()) {
         showAlert(LangManager.t('alert.phone'));
         return;
       }

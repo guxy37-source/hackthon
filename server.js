@@ -25,10 +25,10 @@ app.post('/api/register', (req, res) => {
       return res.status(400).json({ success: false, message: '请填写所有必填字段！' });
     }
 
-    // Phone validation
-    const phoneRegex = /^1[3-9]\d{9}$/;
+    // Phone validation - E.164 format (+<country_code><subscriber_number>)
+    const phoneRegex = /^\+\d{6,15}$/;
     if (!phoneRegex.test(phone.trim())) {
-      return res.status(400).json({ success: false, message: '请输入有效的11位手机号码！' });
+      return res.status(400).json({ success: false, message: '请输入有效的国际格式手机号码（E.164）！' });
     }
 
     // Email validation
