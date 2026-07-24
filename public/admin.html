@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>黑客松后台管理系统 - 学生活动注册控制台</title>
+  <title>Hackathon Admin - Student Registration Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="i18n.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     body {
@@ -27,18 +28,9 @@
     .table-header {
       background: rgba(30, 41, 59, 0.8);
     }
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #0f172a;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 4px;
-    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
@@ -50,32 +42,38 @@
         <i class="fa-solid fa-laptop-code"></i>
       </div>
       <div>
-        <h1 class="font-extrabold text-base sm:text-lg text-white leading-tight">2026 黑客松管理后台</h1>
-        <p class="text-[11px] text-slate-400">大学生活动注册 & 现场核销数据看板</p>
+        <h1 class="font-extrabold text-base sm:text-lg text-white leading-tight" data-i18n="nav.title">2026 黑客松管理后台</h1>
+        <p class="text-[11px] text-slate-400" data-i18n="nav.subtitle">大学生活动注册 & 现场核销数据看板</p>
       </div>
     </div>
 
     <!-- Quick Action Buttons -->
     <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Language Switcher -->
+      <div id="lang-switcher" class="hidden sm:block"></div>
+
       <!-- QR Code Modal Trigger -->
       <button onclick="openQrModal()" class="bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold py-2 px-3 sm:px-4 rounded-xl transition-all flex items-center gap-2">
         <i class="fa-solid fa-qrcode text-indigo-400"></i>
-        <span class="hidden sm:inline">宣传二维码</span>
+        <span class="hidden sm:inline" data-i18n="nav.qr">宣传二维码</span>
       </button>
 
       <!-- Quick Check-in Trigger -->
       <button onclick="openCheckInModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 px-3 sm:px-4 rounded-xl transition-all shadow-md shadow-indigo-600/30 flex items-center gap-2">
         <i class="fa-solid fa-barcode"></i>
-        <span>现场签到/核销</span>
+        <span data-i18n="nav.checkin">现场签到/核销</span>
       </button>
 
       <!-- Export CSV -->
       <a href="/api/export" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 px-3 sm:px-4 rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2">
         <i class="fa-solid fa-file-excel"></i>
-        <span class="hidden sm:inline">导出 Excel/CSV</span>
+        <span class="hidden sm:inline" data-i18n="nav.export">导出 Excel/CSV</span>
       </a>
     </div>
   </nav>
+
+  <!-- Mobile Language Switcher -->
+  <div id="lang-switcher-mobile" class="sm:hidden flex justify-center py-2 bg-slate-900/50"></div>
 
   <!-- Main Content Layout -->
   <main class="flex-1 px-4 sm:px-8 py-6 space-y-6 max-w-7xl mx-auto w-full">
@@ -86,10 +84,10 @@
       <!-- Card 1: Total -->
       <div class="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between">
         <div>
-          <p class="text-xs font-medium text-slate-400">总报名人数</p>
+          <p class="text-xs font-medium text-slate-400" data-i18n="stat.total">总报名人数</p>
           <h3 id="stat-total" class="text-2xl sm:text-3xl font-black text-white mt-1">0</h3>
           <p class="text-[11px] text-indigo-400 mt-1 flex items-center gap-1">
-            <i class="fa-solid fa-users text-[10px]"></i> 实时全网报名
+            <i class="fa-solid fa-users text-[10px]"></i> <span data-i18n="stat.totalSub">实时全网报名</span>
           </p>
         </div>
         <div class="w-12 h-12 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xl">
@@ -100,9 +98,9 @@
       <!-- Card 2: In Person -->
       <div class="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between">
         <div>
-          <p class="text-xs font-medium text-slate-400">现场参加人数</p>
+          <p class="text-xs font-medium text-slate-400" data-i18n="stat.inPerson">现场参加人数</p>
           <h3 id="stat-in-person" class="text-2xl sm:text-3xl font-black text-emerald-400 mt-1">0</h3>
-          <p id="stat-in-person-ratio" class="text-[11px] text-emerald-400/80 mt-1">占比 --%</p>
+          <p id="stat-in-person-ratio" class="text-[11px] text-emerald-400/80 mt-1">--%</p>
         </div>
         <div class="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xl">
           <i class="fa-solid fa-people-roof"></i>
@@ -112,9 +110,9 @@
       <!-- Card 3: Online -->
       <div class="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between">
         <div>
-          <p class="text-xs font-medium text-slate-400">线上远程参加</p>
+          <p class="text-xs font-medium text-slate-400" data-i18n="stat.online">线上远程参加</p>
           <h3 id="stat-online" class="text-2xl sm:text-3xl font-black text-sky-400 mt-1">0</h3>
-          <p id="stat-online-ratio" class="text-[11px] text-sky-400/80 mt-1">占比 --%</p>
+          <p id="stat-online-ratio" class="text-[11px] text-sky-400/80 mt-1">--%</p>
         </div>
         <div class="w-12 h-12 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/20 flex items-center justify-center text-xl">
           <i class="fa-solid fa-globe"></i>
@@ -124,9 +122,9 @@
       <!-- Card 4: Checked In -->
       <div class="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between">
         <div>
-          <p class="text-xs font-medium text-slate-400">已现场签到</p>
+          <p class="text-xs font-medium text-slate-400" data-i18n="stat.checked">已现场签到</p>
           <h3 id="stat-checked" class="text-2xl sm:text-3xl font-black text-amber-400 mt-1">0</h3>
-          <p id="stat-checked-ratio" class="text-[11px] text-amber-400/80 mt-1">完成率 --%</p>
+          <p id="stat-checked-ratio" class="text-[11px] text-amber-400/80 mt-1">--%</p>
         </div>
         <div class="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl">
           <i class="fa-solid fa-clipboard-check"></i>
@@ -142,9 +140,9 @@
       <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-chart-pie text-indigo-400"></i> 参会方式占比
+            <i class="fa-solid fa-chart-pie text-indigo-400"></i> <span data-i18n="chart.attendance">参会方式占比</span>
           </h2>
-          <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">实时更新</span>
+          <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded" data-i18n="chart.attendanceSub">实时更新</span>
         </div>
         <div class="relative flex-1 flex items-center justify-center min-h-[220px]">
           <canvas id="attendance-chart"></canvas>
@@ -155,9 +153,9 @@
       <div class="glass-card rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
-            <i class="fa-solid fa-chart-simple text-indigo-400"></i> 高校报名统计 (Top Schools)
+            <i class="fa-solid fa-chart-simple text-indigo-400"></i> <span data-i18n="chart.schools">高校报名统计 (Top Schools)</span>
           </h2>
-          <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">报名来源学校</span>
+          <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded" data-i18n="chart.schoolsSub">报名来源学校</span>
         </div>
         <div class="relative flex-1 min-h-[220px]">
           <canvas id="schools-chart"></canvas>
@@ -174,34 +172,31 @@
         
         <div class="flex items-center gap-2">
           <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-list-check text-indigo-400"></i> 选手报名列表
+            <i class="fa-solid fa-list-check text-indigo-400"></i> <span data-i18n="table.title">选手报名列表</span>
           </h2>
           <span id="record-count-badge" class="bg-indigo-950/80 border border-indigo-800 text-indigo-300 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-            共 0 条
+            0
           </span>
         </div>
 
         <!-- Search & Filters -->
         <div class="flex flex-wrap items-center gap-2">
-          <!-- Search Box -->
           <div class="relative min-w-[200px] flex-1 sm:flex-initial">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="search-input" placeholder="搜索姓名/学校/手机号/编号..." 
+            <input type="text" id="search-input" data-i18n-placeholder="table.search" placeholder="搜索姓名/学校/手机号/编号..." 
               class="w-full bg-slate-900/90 border border-slate-700 focus:border-indigo-500 text-xs rounded-xl pl-9 pr-3 py-2 text-slate-200 outline-none placeholder:text-slate-500">
           </div>
 
-          <!-- Attendance Filter -->
           <select id="filter-attendance" class="bg-slate-900/90 border border-slate-700 focus:border-indigo-500 text-xs rounded-xl px-3 py-2 text-slate-200 outline-none">
-            <option value="all">参会类型: 全部</option>
-            <option value="in_person">🏢 现场参加</option>
-            <option value="online">🌐 线上参加</option>
+            <option value="all" data-i18n="filter.attendanceAll">参会类型: 全部</option>
+            <option value="in_person" data-i18n="filter.inPerson">🏢 现场参加</option>
+            <option value="online" data-i18n="filter.online">🌐 线上参加</option>
           </select>
 
-          <!-- Check-in Filter -->
           <select id="filter-checked" class="bg-slate-900/90 border border-slate-700 focus:border-indigo-500 text-xs rounded-xl px-3 py-2 text-slate-200 outline-none">
-            <option value="all">核销状态: 全部</option>
-            <option value="true">✅ 已签到</option>
-            <option value="false">⏳ 未签到</option>
+            <option value="all" data-i18n="filter.checkedAll">核销状态: 全部</option>
+            <option value="true" data-i18n="filter.checked">✅ 已签到</option>
+            <option value="false" data-i18n="filter.unchecked">⏳ 未签到</option>
           </select>
 
           <button onclick="loadRegistrations()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold p-2 rounded-xl border border-slate-700 transition-colors">
@@ -216,19 +211,18 @@
         <table class="w-full text-left border-collapse text-xs">
           <thead class="table-header text-slate-400 font-medium border-b border-slate-800">
             <tr>
-              <th class="p-3">通行证编号</th>
-              <th class="p-3">姓名</th>
-              <th class="p-3">学校</th>
-              <th class="p-3">院系 / 专业</th>
-              <th class="p-3">年龄</th>
-              <th class="p-3">联系方式</th>
-              <th class="p-3">参会形式</th>
-              <th class="p-3">核销状态</th>
-              <th class="p-3 text-right">操作</th>
+              <th class="p-3" data-i18n="col.id">通行证编号</th>
+              <th class="p-3" data-i18n="col.name">姓名</th>
+              <th class="p-3" data-i18n="col.school">学校</th>
+              <th class="p-3" data-i18n="col.dept">院系 / 专业</th>
+              <th class="p-3" data-i18n="col.age">年龄</th>
+              <th class="p-3" data-i18n="col.contact">联系方式</th>
+              <th class="p-3" data-i18n="col.attendance">参会形式</th>
+              <th class="p-3" data-i18n="col.status">核销状态</th>
+              <th class="p-3 text-right" data-i18n="col.action">操作</th>
             </tr>
           </thead>
           <tbody id="registrations-tbody" class="divide-y divide-slate-800/60 text-slate-300">
-            <!-- Dynamic rows will be inserted here -->
           </tbody>
         </table>
       </div>
@@ -249,15 +243,15 @@
         <div class="w-12 h-12 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl">
           <i class="fa-solid fa-barcode"></i>
         </div>
-        <h3 class="text-lg font-bold text-white">现场签到与核销</h3>
-        <p class="text-xs text-slate-400 mt-1">输入选手手机号或通行证编号（如 HACK-8K9M2P）</p>
+        <h3 class="text-lg font-bold text-white" data-i18n="modal.checkin.title">现场签到与核销</h3>
+        <p class="text-xs text-slate-400 mt-1" data-i18n="modal.checkin.subtitle">输入选手手机号或通行证编号（如 HACK-8K9M2P）</p>
       </div>
 
       <div class="space-y-4">
         <div class="relative">
-          <input type="text" id="checkin-keyword" placeholder="手机号 或 通行证编号..." 
+          <input type="text" id="checkin-keyword" data-i18n-placeholder="modal.checkin.placeholder" placeholder="手机号 或 通行证编号..." 
             class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 text-sm rounded-xl pl-4 pr-10 py-3 text-white outline-none">
-          <button onclick="performCheckIn()" class="absolute right-2 top-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+          <button onclick="performCheckIn()" class="absolute right-2 top-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors" data-i18n="modal.checkin.confirm">
             确认核销
           </button>
         </div>
@@ -276,8 +270,8 @@
         <i class="fa-solid fa-xmark text-lg"></i>
       </button>
 
-      <h3 class="text-lg font-bold text-white mb-1">活动宣传报名二维码</h3>
-      <p class="text-xs text-slate-400 mb-4">打印贴在海报或推文中，学生扫码即可手机注册</p>
+      <h3 class="text-lg font-bold text-white mb-1" data-i18n="modal.qr.title">活动宣传报名二维码</h3>
+      <p class="text-xs text-slate-400 mb-4" data-i18n="modal.qr.subtitle">打印贴在海报或推文中，学生扫码即可手机注册</p>
 
       <div class="bg-white p-3 rounded-2xl shadow-inner inline-block mx-auto mb-4">
         <img id="qr-modal-img" src="" alt="Registration QR Code" class="w-56 h-56 mx-auto">
@@ -287,10 +281,10 @@
 
       <div class="flex gap-2">
         <button onclick="copyQrUrl()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2.5 rounded-xl font-medium transition-colors">
-          <i class="fa-solid fa-copy"></i> 复制报名链接
+          <i class="fa-solid fa-copy"></i> <span data-i18n="modal.qr.copy">复制报名链接</span>
         </button>
         <a id="qr-download-btn" download="Hackathon_Register_QR.png" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-1">
-          <i class="fa-solid fa-download"></i> 保存二维码图片
+          <i class="fa-solid fa-download"></i> <span data-i18n="modal.qr.download">保存二维码图片</span>
         </a>
       </div>
 
@@ -302,18 +296,39 @@
     let attendanceChart = null;
     let schoolsChart = null;
     let allRegistrations = [];
+    let lastStats = null;
+
+    // Render language switchers
+    document.getElementById('lang-switcher').innerHTML = LangManager.renderSwitcher(false);
+    document.getElementById('lang-switcher-mobile').innerHTML = LangManager.renderSwitcher(false);
+
+    // Language change callback - re-render dynamic content
+    function onLanguageChange() {
+      if (lastStats) renderCharts(lastStats);
+      filterAndRenderTable();
+      updateRatioLabels();
+    }
+
+    function updateRatioLabels() {
+      if (!lastStats) return;
+      const stats = lastStats;
+      const inPersonRatio = stats.total > 0 ? ((stats.inPerson / stats.total) * 100).toFixed(1) : 0;
+      const onlineRatio = stats.total > 0 ? ((stats.online / stats.total) * 100).toFixed(1) : 0;
+      const checkedRatio = stats.inPerson > 0 ? ((stats.checkedInCount / stats.inPerson) * 100).toFixed(1) : 0;
+      document.getElementById('stat-in-person-ratio').textContent = `${LangManager.t('stat.inPersonRatio')} ${inPersonRatio}%`;
+      document.getElementById('stat-online-ratio').textContent = `${LangManager.t('stat.onlineRatio')} ${onlineRatio}%`;
+      document.getElementById('stat-checked-ratio').textContent = `${LangManager.t('stat.checkedRatio')} ${checkedRatio}%`;
+    }
 
     // Initialize Dashboard
     document.addEventListener('DOMContentLoaded', () => {
+      LangManager.init();
       loadStats();
       loadRegistrations();
 
-      // Search & Filter change listeners
       document.getElementById('search-input').addEventListener('input', filterAndRenderTable);
       document.getElementById('filter-attendance').addEventListener('change', filterAndRenderTable);
       document.getElementById('filter-checked').addEventListener('change', filterAndRenderTable);
-
-      // Auto checkin enter key
       document.getElementById('checkin-keyword').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') performCheckIn();
       });
@@ -327,19 +342,12 @@
         if (!data.success) return;
 
         const stats = data.data;
+        lastStats = stats;
         document.getElementById('stat-total').textContent = stats.total;
         document.getElementById('stat-in-person').textContent = stats.inPerson;
         document.getElementById('stat-online').textContent = stats.online;
         document.getElementById('stat-checked').textContent = stats.checkedInCount;
-
-        const inPersonRatio = stats.total > 0 ? ((stats.inPerson / stats.total) * 100).toFixed(1) : 0;
-        const onlineRatio = stats.total > 0 ? ((stats.online / stats.total) * 100).toFixed(1) : 0;
-        const checkedRatio = stats.inPerson > 0 ? ((stats.checkedInCount / stats.inPerson) * 100).toFixed(1) : 0;
-
-        document.getElementById('stat-in-person-ratio').textContent = `占比 ${inPersonRatio}%`;
-        document.getElementById('stat-online-ratio').textContent = `占比 ${onlineRatio}%`;
-        document.getElementById('stat-checked-ratio').textContent = `现场签到率 ${checkedRatio}%`;
-
+        updateRatioLabels();
         renderCharts(stats);
       } catch (err) {
         console.error('Failed to load stats:', err);
@@ -348,14 +356,13 @@
 
     // Render Charts
     function renderCharts(stats) {
-      // Attendance Pie Chart
       const ctxPie = document.getElementById('attendance-chart').getContext('2d');
       if (attendanceChart) attendanceChart.destroy();
 
       attendanceChart = new Chart(ctxPie, {
         type: 'doughnut',
         data: {
-          labels: ['现场参加', '线上参加'],
+          labels: [LangManager.t('chart.legend.inPerson'), LangManager.t('chart.legend.online')],
           datasets: [{
             data: [stats.inPerson, stats.online],
             backgroundColor: ['#10b981', '#38bdf8'],
@@ -376,7 +383,6 @@
         }
       });
 
-      // Top Schools Bar Chart
       const ctxBar = document.getElementById('schools-chart').getContext('2d');
       if (schoolsChart) schoolsChart.destroy();
 
@@ -386,9 +392,9 @@
       schoolsChart = new Chart(ctxBar, {
         type: 'bar',
         data: {
-          labels: schoolLabels.length > 0 ? schoolLabels : ['暂无数据'],
+          labels: schoolLabels.length > 0 ? schoolLabels : ['—'],
           datasets: [{
-            label: '报名人数',
+            label: LangManager.t('table.title'),
             data: schoolCounts.length > 0 ? schoolCounts : [0],
             backgroundColor: '#6366f1',
             borderRadius: 6
@@ -401,9 +407,7 @@
             x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
             y: { ticks: { color: '#94a3b8', precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }
           },
-          plugins: {
-            legend: { display: false }
-          }
+          plugins: { legend: { display: false } }
         }
       });
     }
@@ -429,7 +433,6 @@
       const checked = document.getElementById('filter-checked').value;
 
       let filtered = allRegistrations.filter(item => {
-        // Search query
         const matchSearch = !query || (
           item.name.toLowerCase().includes(query) ||
           item.school.toLowerCase().includes(query) ||
@@ -438,17 +441,12 @@
           item.phone.includes(query) ||
           item.id.toLowerCase().includes(query)
         );
-
-        // Attendance filter
         const matchAttendance = attendance === 'all' || item.attendance === attendance;
-
-        // Checked status filter
         const matchChecked = checked === 'all' || (checked === 'true' ? item.checkedIn : !item.checkedIn);
-
         return matchSearch && matchAttendance && matchChecked;
       });
 
-      document.getElementById('record-count-badge').textContent = `共 ${filtered.length} 条`;
+      document.getElementById('record-count-badge').textContent = `${LangManager.t('table.count')} ${filtered.length} ${LangManager.t('table.records')}`.trim();
 
       const tbody = document.getElementById('registrations-tbody');
       tbody.innerHTML = '';
@@ -458,7 +456,7 @@
           <tr>
             <td colspan="9" class="p-8 text-center text-slate-500">
               <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
-              未找到符合条件的报名记录
+              ${LangManager.t('table.empty')}
             </td>
           </tr>
         `;
@@ -470,19 +468,19 @@
         tr.className = 'hover:bg-slate-800/40 transition-colors';
 
         const attendanceTag = item.attendance === 'in_person'
-          ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">🏢 现场参加</span>'
-          : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/20">🌐 线上参加</span>';
+          ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">${LangManager.t('filter.inPerson')}</span>`
+          : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/20">${LangManager.t('filter.online')}</span>`;
 
         const checkInTag = item.checkedIn
-          ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">✅ 已签到</span>'
-          : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">⏳ 未签到</span>';
+          ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">${LangManager.t('filter.checked')}</span>`
+          : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">${LangManager.t('filter.unchecked')}</span>`;
 
         tr.innerHTML = `
           <td class="p-3 font-mono text-indigo-400 font-bold">${item.id}</td>
           <td class="p-3 font-semibold text-white">${item.name}</td>
           <td class="p-3 text-slate-300">${item.school}</td>
           <td class="p-3 text-slate-400">${item.department} • ${item.major}</td>
-          <td class="p-3 text-slate-400">${item.age}岁</td>
+          <td class="p-3 text-slate-400">${item.age}</td>
           <td class="p-3 font-mono text-slate-300">
             <div>${item.phone}</div>
             <div class="text-[10px] text-slate-500">${item.email}</div>
@@ -491,11 +489,11 @@
           <td class="p-3">${checkInTag}</td>
           <td class="p-3 text-right space-x-1">
             ${!item.checkedIn ? `
-              <button onclick="quickCheckInDirect('${item.id}')" title="快速签到核销" class="bg-indigo-600/80 hover:bg-indigo-500 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-colors">
-                核销
+              <button onclick="quickCheckInDirect('${item.id}')" class="bg-indigo-600/80 hover:bg-indigo-500 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-colors">
+                ${LangManager.t('table.checkin')}
               </button>
             ` : ''}
-            <button onclick="deleteRecord('${item.id}')" title="删除记录" class="bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/40 text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors">
+            <button onclick="deleteRecord('${item.id}')" class="bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/40 text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors">
               <i class="fa-solid fa-trash-can"></i>
             </button>
           </td>
@@ -520,14 +518,13 @@
           alert(result.message);
         }
       } catch (err) {
-        alert('核销请求失败');
+        alert(LangManager.t('modal.checkin.error'));
       }
     }
 
     // Delete registration
     async function deleteRecord(id) {
-      if (!confirm(`确定要删除通行证编号为 ${id} 的报名记录吗？`)) return;
-
+      if (!confirm(`${LangManager.t('table.deleteConfirm')} ${id} ${LangManager.t('table.deleteConfirm2')}`)) return;
       try {
         const res = await fetch(`/api/registrations/${id}`, { method: 'DELETE' });
         const result = await res.json();
@@ -538,7 +535,7 @@
           alert(result.message);
         }
       } catch (err) {
-        alert('删除操作失败');
+        alert(LangManager.t('modal.checkin.error'));
       }
     }
 
@@ -571,27 +568,27 @@
         if (result.success) {
           resBox.className = 'p-4 rounded-xl text-xs bg-emerald-500/20 border border-emerald-500/30 text-emerald-300';
           resBox.innerHTML = `
-            <p class="font-bold text-sm mb-1"><i class="fa-solid fa-circle-check"></i> ${result.message}</p>
-            <p>选手：${result.record.name} (${result.record.school})</p>
-            <p>编号：${result.record.id} | 电话：${result.record.phone}</p>
+            <p class="font-bold text-sm mb-1"><i class="fa-solid fa-circle-check"></i> ${LangManager.t('modal.checkin.success')}</p>
+            <p>${LangManager.t('modal.checkin.player')}：${result.record.name} (${result.record.school})</p>
+            <p>${LangManager.t('modal.checkin.id')}：${result.record.id} | ${LangManager.t('modal.checkin.phone')}：${result.record.phone}</p>
           `;
           loadStats();
           loadRegistrations();
         } else if (result.alreadyCheckedIn) {
           resBox.className = 'p-4 rounded-xl text-xs bg-amber-500/20 border border-amber-500/30 text-amber-300';
           resBox.innerHTML = `
-            <p class="font-bold text-sm mb-1"><i class="fa-solid fa-triangle-exclamation"></i> ${result.message}</p>
-            <p>选手：${result.record.name} (${result.record.school})</p>
-            <p>先前签到时间：${new Date(result.record.checkInTime).toLocaleString('zh-CN')}</p>
+            <p class="font-bold text-sm mb-1"><i class="fa-solid fa-triangle-exclamation"></i> ${LangManager.t('modal.checkin.already')}</p>
+            <p>${LangManager.t('modal.checkin.player')}：${result.record.name} (${result.record.school})</p>
+            <p>${LangManager.t('modal.checkin.prevTime')}：${new Date(result.record.checkInTime).toLocaleString()}</p>
           `;
         } else {
           resBox.className = 'p-4 rounded-xl text-xs bg-rose-500/20 border border-rose-500/30 text-rose-300';
-          resBox.innerHTML = `<p class="font-bold"><i class="fa-solid fa-circle-xmark"></i> ${result.message}</p>`;
+          resBox.innerHTML = `<p class="font-bold"><i class="fa-solid fa-circle-xmark"></i> ${LangManager.t('modal.checkin.notFound')}</p>`;
         }
       } catch (err) {
         resBox.classList.remove('hidden');
         resBox.className = 'p-4 rounded-xl text-xs bg-rose-500/20 border border-rose-500/30 text-rose-300';
-        resBox.innerHTML = `<p class="font-bold"><i class="fa-solid fa-circle-xmark"></i> 请求出错，请重试</p>`;
+        resBox.innerHTML = `<p class="font-bold"><i class="fa-solid fa-circle-xmark"></i> ${LangManager.t('modal.checkin.error')}</p>`;
       }
     }
 
@@ -607,7 +604,7 @@
           document.getElementById('qrcode-modal').classList.remove('hidden');
         }
       } catch (err) {
-        alert('生成二维码失败');
+        alert(LangManager.t('modal.qr.fail'));
       }
     }
 
@@ -618,7 +615,7 @@
     function copyQrUrl() {
       const url = document.getElementById('qr-target-url').textContent;
       navigator.clipboard.writeText(url).then(() => {
-        alert('报名网址链接已复制到剪贴板！');
+        alert(LangManager.t('modal.qr.copied'));
       });
     }
   </script>
