@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>黑客松后台管理系统 - 学生活动注册控制台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #0b0f19;
+      color: #f1f5f9;
+    }
+    .glass-nav {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(18, 26, 43, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .table-header {
+      background: rgba(30, 41, 59, 0.8);
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+  <!-- Navigation Bar -->
+  <nav class="glass-nav sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-500/20">
+        <i class="fa-solid fa-laptop-code"></i>
+      </div>
+      <div>
+        <h1 class="font-extrabold text-base sm:text-lg text-white leading-tight">2026 黑客松管理后台</h1>
+        <p class="text-[11px] text-slate-400">大学生活动注册 & 现场核销数据看板</p>
+      </div>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- QR Code Modal Trigger -->
+      <button onclick="openQrModal()" class="bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold py-2 px-3 sm:px-4 rounded-xl transition-all flex items-center gap-2">
+        <i class="fa-solid fa-qrcode text-indigo-400"></i>
+        <span class="hidden sm:inline">宣传二维码</span>
+      </button>
+
+      <!-- Quick Check-in Trigger -->
+      <button onclick="openCheckInModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 px-3 sm:px-4 rounded-xl transition-all shadow-md shadow-indigo-600/30 flex items-center gap-2">
+        <i class="fa-solid fa-barcode"></i>
+        <span>现场签到/核销</span>
+      </button>
+
+      <!-- Export CSV -->
+      <a href="/api/export" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 px-3 sm:px-4 rounded-xl transition-all shadow-md shadow-emerald-600/20 flex items-center gap-2">
+        <i class="fa-solid fa-file-excel"></i>
+        <span class="hidden sm:inline">导出 Excel/CSV</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main Content Layout -->
+  <main class="flex-1 px-4 sm:px-8 py-6 space-y-6 max-w-7xl mx-auto w-full">
+
+    <!-- Metric KPI Cards (4 Cards) -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1: Total -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-400">总报名人数</p>
+          <h3 id="stat-total" class="text-2xl sm:text-3xl font-black text-white mt-1">0</h3>
+          <p class="text-[11px] text-indigo-400 mt-1 flex items-center gap-1">
+            <i class="fa-solid fa-users text-[10px]"></i> 实时全网报名
+          </p>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-indigo-500/15 text-indigo-400 border border-indigo-500/20 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-user-group"></i>
+        </div>
+      </div>
+
+      <!-- Card 2: In Person -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-400">现场参加人数</p>
+          <h3 id="stat-in-person" class="text-2xl sm:text-3xl font-black text-emerald-400 mt-1">0</h3>
+          <p id="stat-in-person-ratio" class="text-[11px] text-emerald-400/80 mt-1">占比 --%</p>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-people-roof"></i>
+        </div>
+      </div>
+
+      <!-- Card 3: Online -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-400">线上远程参加</p>
+          <h3 id="stat-online" class="text-2xl sm:text-3xl font-black text-sky-400 mt-1">0</h3>
+          <p id="stat-online-ratio" class="text-[11px] text-sky-400/80 mt-1">占比 --%</p>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/20 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-globe"></i>
+        </div>
+      </div>
+
+      <!-- Card 4: Checked In -->
+      <div class="glass-card rounded-2xl p-4 sm:p-5 flex items-center justify-between">
+        <div>
+          <p class="text-xs font-medium text-slate-400">已现场签到</p>
+          <h3 id="stat-checked" class="text-2xl sm:text-3xl font-black text-amber-400 mt-1">0</h3>
+          <p id="stat-checked-ratio" class="text-[11px] text-amber-400/80 mt-1">完成率 --%</p>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/20 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-clipboard-check"></i>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Visual Charts Section -->
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Chart 1: Attendance Mode Pie -->
+      <div class="glass-card rounded-2xl p-5 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-chart-pie text-indigo-400"></i> 参会方式占比
+          </h2>
+          <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">实时更新</span>
+        </div>
+        <div class="relative flex-1 flex items-center justify-center min-h-[220px]">
+          <canvas id="attendance-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart 2: Top Schools Distribution Bar Chart -->
+      <div class="glass-card rounded-2xl p-5 lg:col-span-2 flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-chart-simple text-indigo-400"></i> 高校报名统计 (Top Schools)
+          </h2>
+          <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">报名来源学校</span>
+        </div>
+        <div class="relative flex-1 min-h-[220px]">
+          <canvas id="schools-chart"></canvas>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Data Table Section -->
+    <section class="glass-card rounded-2xl p-5 space-y-4">
+      
+      <!-- Table Filter Bar -->
+      <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        
+        <div class="flex items-center gap-2">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-indigo-400"></i> 选手报名列表
+          </h2>
+          <span id="record-count-badge" class="bg-indigo-950/80 border border-indigo-800 text-indigo-300 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+            共 0 条
+          </span>
+        </div>
+
+        <!-- Search & Filters -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Search Box -->
+          <div class="relative min-w-[200px] flex-1 sm:flex-initial">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="search-input" placeholder="搜索姓名/学校/手机号/编号..." 
+              class="w-full bg-slate-900/90 border border-slate-700 focus:border-indigo-500 text-xs rounded-xl pl-9 pr-3 py-2 text-slate-200 outline-none placeholder:text-slate-500">
+          </div>
+
+          <!-- Attendance Filter -->
+          <select id="filter-attendance" class="bg-slate-900/90 border border-slate-700 focus:border-indigo-500 text-xs rounded-xl px-3 py-2 text-slate-200 outline-none">
+            <option value="all">参会类型: 全部</option>
+            <option value="in_person">🏢 现场参加</option>
+            <option value="online">🌐 线上参加</option>
+          </select>
+
+          <!-- Check-in Filter -->
+          <select id="filter-checked" class="bg-slate-900/90 border border-slate-700 focus:border-indigo-500 text-xs rounded-xl px-3 py-2 text-slate-200 outline-none">
+            <option value="all">核销状态: 全部</option>
+            <option value="true">✅ 已签到</option>
+            <option value="false">⏳ 未签到</option>
+          </select>
+
+          <button onclick="loadRegistrations()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold p-2 rounded-xl border border-slate-700 transition-colors">
+            <i class="fa-solid fa-rotate"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Table Wrapper -->
+      <div class="overflow-x-auto rounded-xl border border-slate-800">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead class="table-header text-slate-400 font-medium border-b border-slate-800">
+            <tr>
+              <th class="p-3">通行证编号</th>
+              <th class="p-3">姓名</th>
+              <th class="p-3">学校</th>
+              <th class="p-3">院系 / 专业</th>
+              <th class="p-3">年龄</th>
+              <th class="p-3">联系方式</th>
+              <th class="p-3">参会形式</th>
+              <th class="p-3">核销状态</th>
+              <th class="p-3 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody id="registrations-tbody" class="divide-y divide-slate-800/60 text-slate-300">
+            <!-- Dynamic rows will be inserted here -->
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Quick Check-in Modal -->
+  <div id="checkin-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-md rounded-2xl p-6 shadow-2xl relative border border-slate-700">
+      
+      <button onclick="closeCheckInModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="text-center mb-5">
+        <div class="w-12 h-12 bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 rounded-2xl flex items-center justify-center mx-auto mb-2 text-xl">
+          <i class="fa-solid fa-barcode"></i>
+        </div>
+        <h3 class="text-lg font-bold text-white">现场签到与核销</h3>
+        <p class="text-xs text-slate-400 mt-1">输入选手手机号或通行证编号（如 HACK-8K9M2P）</p>
+      </div>
+
+      <div class="space-y-4">
+        <div class="relative">
+          <input type="text" id="checkin-keyword" placeholder="手机号 或 通行证编号..." 
+            class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 text-sm rounded-xl pl-4 pr-10 py-3 text-white outline-none">
+          <button onclick="performCheckIn()" class="absolute right-2 top-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-colors">
+            确认核销
+          </button>
+        </div>
+
+        <div id="checkin-result" class="hidden p-4 rounded-xl text-xs space-y-2"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- QR Code Generator Modal -->
+  <div id="qrcode-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass-card w-full max-w-sm rounded-2xl p-6 shadow-2xl relative text-center border border-slate-700">
+      
+      <button onclick="closeQrModal()" class="absolute right-4 top-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <h3 class="text-lg font-bold text-white mb-1">活动宣传报名二维码</h3>
+      <p class="text-xs text-slate-400 mb-4">打印贴在海报或推文中，学生扫码即可手机注册</p>
+
+      <div class="bg-white p-3 rounded-2xl shadow-inner inline-block mx-auto mb-4">
+        <img id="qr-modal-img" src="" alt="Registration QR Code" class="w-56 h-56 mx-auto">
+      </div>
+
+      <p id="qr-target-url" class="text-[11px] text-slate-400 font-mono break-all mb-4 bg-slate-900/80 p-2 rounded-lg border border-slate-800"></p>
+
+      <div class="flex gap-2">
+        <button onclick="copyQrUrl()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2.5 rounded-xl font-medium transition-colors">
+          <i class="fa-solid fa-copy"></i> 复制报名链接
+        </button>
+        <a id="qr-download-btn" download="Hackathon_Register_QR.png" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs py-2.5 rounded-xl font-medium transition-colors flex items-center justify-center gap-1">
+          <i class="fa-solid fa-download"></i> 保存二维码图片
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    let attendanceChart = null;
+    let schoolsChart = null;
+    let allRegistrations = [];
+
+    // Initialize Dashboard
+    document.addEventListener('DOMContentLoaded', () => {
+      loadStats();
+      loadRegistrations();
+
+      // Search & Filter change listeners
+      document.getElementById('search-input').addEventListener('input', filterAndRenderTable);
+      document.getElementById('filter-attendance').addEventListener('change', filterAndRenderTable);
+      document.getElementById('filter-checked').addEventListener('change', filterAndRenderTable);
+
+      // Auto checkin enter key
+      document.getElementById('checkin-keyword').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') performCheckIn();
+      });
+    });
+
+    // Load Stats
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (!data.success) return;
+
+        const stats = data.data;
+        document.getElementById('stat-total').textContent = stats.total;
+        document.getElementById('stat-in-person').textContent = stats.inPerson;
+        document.getElementById('stat-online').textContent = stats.online;
+        document.getElementById('stat-checked').textContent = stats.checkedInCount;
+
+        const inPersonRatio = stats.total > 0 ? ((stats.inPerson / stats.total) * 100).toFixed(1) : 0;
+        const onlineRatio = stats.total > 0 ? ((stats.online / stats.total) * 100).toFixed(1) : 0;
+        const checkedRatio = stats.inPerson > 0 ? ((stats.checkedInCount / stats.inPerson) * 100).toFixed(1) : 0;
+
+        document.getElementById('stat-in-person-ratio').textContent = `占比 ${inPersonRatio}%`;
+        document.getElementById('stat-online-ratio').textContent = `占比 ${onlineRatio}%`;
+        document.getElementById('stat-checked-ratio').textContent = `现场签到率 ${checkedRatio}%`;
+
+        renderCharts(stats);
+      } catch (err) {
+        console.error('Failed to load stats:', err);
+      }
+    }
+
+    // Render Charts
+    function renderCharts(stats) {
+      // Attendance Pie Chart
+      const ctxPie = document.getElementById('attendance-chart').getContext('2d');
+      if (attendanceChart) attendanceChart.destroy();
+
+      attendanceChart = new Chart(ctxPie, {
+        type: 'doughnut',
+        data: {
+          labels: ['现场参加', '线上参加'],
+          datasets: [{
+            data: [stats.inPerson, stats.online],
+            backgroundColor: ['#10b981', '#38bdf8'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: { color: '#94a3b8', font: { size: 11 } }
+            }
+          },
+          cutout: '70%'
+        }
+      });
+
+      // Top Schools Bar Chart
+      const ctxBar = document.getElementById('schools-chart').getContext('2d');
+      if (schoolsChart) schoolsChart.destroy();
+
+      const schoolLabels = Object.keys(stats.schools || {});
+      const schoolCounts = Object.values(stats.schools || {});
+
+      schoolsChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: schoolLabels.length > 0 ? schoolLabels : ['暂无数据'],
+          datasets: [{
+            label: '报名人数',
+            data: schoolCounts.length > 0 ? schoolCounts : [0],
+            backgroundColor: '#6366f1',
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+            y: { ticks: { color: '#94a3b8', precision: 0 }, grid: { color: 'rgba(255,255,255,0.05)' } }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    // Load Registrations List
+    async function loadRegistrations() {
+      try {
+        const res = await fetch('/api/registrations');
+        const data = await res.json();
+        if (data.success) {
+          allRegistrations = data.data;
+          filterAndRenderTable();
+        }
+      } catch (err) {
+        console.error('Failed to load registrations:', err);
+      }
+    }
+
+    // Filter and Render Table Rows
+    function filterAndRenderTable() {
+      const query = document.getElementById('search-input').value.trim().toLowerCase();
+      const attendance = document.getElementById('filter-attendance').value;
+      const checked = document.getElementById('filter-checked').value;
+
+      let filtered = allRegistrations.filter(item => {
+        // Search query
+        const matchSearch = !query || (
+          item.name.toLowerCase().includes(query) ||
+          item.school.toLowerCase().includes(query) ||
+          item.department.toLowerCase().includes(query) ||
+          item.major.toLowerCase().includes(query) ||
+          item.phone.includes(query) ||
+          item.id.toLowerCase().includes(query)
+        );
+
+        // Attendance filter
+        const matchAttendance = attendance === 'all' || item.attendance === attendance;
+
+        // Checked status filter
+        const matchChecked = checked === 'all' || (checked === 'true' ? item.checkedIn : !item.checkedIn);
+
+        return matchSearch && matchAttendance && matchChecked;
+      });
+
+      document.getElementById('record-count-badge').textContent = `共 ${filtered.length} 条`;
+
+      const tbody = document.getElementById('registrations-tbody');
+      tbody.innerHTML = '';
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="p-8 text-center text-slate-500">
+              <i class="fa-solid fa-inbox text-3xl mb-2 block"></i>
+              未找到符合条件的报名记录
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition-colors';
+
+        const attendanceTag = item.attendance === 'in_person'
+          ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/20">🏢 现场参加</span>'
+          : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/20">🌐 线上参加</span>';
+
+        const checkInTag = item.checkedIn
+          ? '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400">✅ 已签到</span>'
+          : '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400">⏳ 未签到</span>';
+
+        tr.innerHTML = `
+          <td class="p-3 font-mono text-indigo-400 font-bold">${item.id}</td>
+          <td class="p-3 font-semibold text-white">${item.name}</td>
+          <td class="p-3 text-slate-300">${item.school}</td>
+          <td class="p-3 text-slate-400">${item.department} • ${item.major}</td>
+          <td class="p-3 text-slate-400">${item.age}岁</td>
+          <td class="p-3 font-mono text-slate-300">
+            <div>${item.phone}</div>
+            <div class="text-[10px] text-slate-500">${item.email}</div>
+          </td>
+          <td class="p-3">${attendanceTag}</td>
+          <td class="p-3">${checkInTag}</td>
+          <td class="p-3 text-right space-x-1">
+            ${!item.checkedIn ? `
+              <button onclick="quickCheckInDirect('${item.id}')" title="快速签到核销" class="bg-indigo-600/80 hover:bg-indigo-500 text-white text-[10px] font-semibold px-2.5 py-1 rounded-lg transition-colors">
+                核销
+              </button>
+            ` : ''}
+            <button onclick="deleteRecord('${item.id}')" title="删除记录" class="bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-800/40 text-[10px] font-semibold px-2 py-1 rounded-lg transition-colors">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Direct check-in from row action
+    async function quickCheckInDirect(id) {
+      try {
+        const res = await fetch('/api/check-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keyword: id })
+        });
+        const result = await res.json();
+        if (result.success) {
+          loadStats();
+          loadRegistrations();
+        } else {
+          alert(result.message);
+        }
+      } catch (err) {
+        alert('核销请求失败');
+      }
+    }
+
+    // Delete registration
+    async function deleteRecord(id) {
+      if (!confirm(`确定要删除通行证编号为 ${id} 的报名记录吗？`)) return;
+
+      try {
+        const res = await fetch(`/api/registrations/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+          loadStats();
+          loadRegistrations();
+        } else {
+          alert(result.message);
+        }
+      } catch (err) {
+        alert('删除操作失败');
+      }
+    }
+
+    // Check-in Modal Functions
+    function openCheckInModal() {
+      document.getElementById('checkin-modal').classList.remove('hidden');
+      document.getElementById('checkin-keyword').focus();
+    }
+
+    function closeCheckInModal() {
+      document.getElementById('checkin-modal').classList.add('hidden');
+      document.getElementById('checkin-keyword').value = '';
+      document.getElementById('checkin-result').classList.add('hidden');
+    }
+
+    async function performCheckIn() {
+      const kw = document.getElementById('checkin-keyword').value.trim();
+      const resBox = document.getElementById('checkin-result');
+      if (!kw) return;
+
+      try {
+        const res = await fetch('/api/check-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keyword: kw })
+        });
+        const result = await res.json();
+
+        resBox.classList.remove('hidden');
+        if (result.success) {
+          resBox.className = 'p-4 rounded-xl text-xs bg-emerald-500/20 border border-emerald-500/30 text-emerald-300';
+          resBox.innerHTML = `
+            <p class="font-bold text-sm mb-1"><i class="fa-solid fa-circle-check"></i> ${result.message}</p>
+            <p>选手：${result.record.name} (${result.record.school})</p>
+            <p>编号：${result.record.id} | 电话：${result.record.phone}</p>
+          `;
+          loadStats();
+          loadRegistrations();
+        } else if (result.alreadyCheckedIn) {
+          resBox.className = 'p-4 rounded-xl text-xs bg-amber-500/20 border border-amber-500/30 text-amber-300';
+          resBox.innerHTML = `
+            <p class="font-bold text-sm mb-1"><i class="fa-solid fa-triangle-exclamation"></i> ${result.message}</p>
+            <p>选手：${result.record.name} (${result.record.school})</p>
+            <p>先前签到时间：${new Date(result.record.checkInTime).toLocaleString('zh-CN')}</p>
+          `;
+        } else {
+          resBox.className = 'p-4 rounded-xl text-xs bg-rose-500/20 border border-rose-500/30 text-rose-300';
+          resBox.innerHTML = `<p class="font-bold"><i class="fa-solid fa-circle-xmark"></i> ${result.message}</p>`;
+        }
+      } catch (err) {
+        resBox.classList.remove('hidden');
+        resBox.className = 'p-4 rounded-xl text-xs bg-rose-500/20 border border-rose-500/30 text-rose-300';
+        resBox.innerHTML = `<p class="font-bold"><i class="fa-solid fa-circle-xmark"></i> 请求出错，请重试</p>`;
+      }
+    }
+
+    // QR Code Modal Functions
+    async function openQrModal() {
+      try {
+        const res = await fetch('/api/qrcode');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('qr-modal-img').src = data.qrCode;
+          document.getElementById('qr-target-url').textContent = data.url;
+          document.getElementById('qr-download-btn').href = data.qrCode;
+          document.getElementById('qrcode-modal').classList.remove('hidden');
+        }
+      } catch (err) {
+        alert('生成二维码失败');
+      }
+    }
+
+    function closeQrModal() {
+      document.getElementById('qrcode-modal').classList.add('hidden');
+    }
+
+    function copyQrUrl() {
+      const url = document.getElementById('qr-target-url').textContent;
+      navigator.clipboard.writeText(url).then(() => {
+        alert('报名网址链接已复制到剪贴板！');
+      });
+    }
+  </script>
+</body>
+</html>

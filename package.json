@@ -1,0 +1,20 @@
+{
+  "name": "activity-0723",
+  "version": "1.0.0",
+  "description": "大学生黑客松活动注册与管理系统",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "json2csv": "^6.0.0-alpha.2",
+    "qrcode": "^1.5.4"
+  }
+}
